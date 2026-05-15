@@ -1,0 +1,2278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Eswatini Drought Intelligence Hub — Design Iteration 1</title>
+<style>
+  /* ---------- Design tokens ---------- */
+  :root {
+    /* Brand */
+    --brand-deep: #1e4d7b;
+    --brand-mid:  #2e6ca6;
+    --brand-soft: #e8f0f7;
+    --accent:     #d4691f;
+    --accent-soft:#fbeadc;
+
+    /* Greys */
+    --bg:        #f4f6f8;
+    --surface:   #ffffff;
+    --line:      #e3e6eb;
+    --line-soft: #eef0f3;
+    --ink:       #1a232e;
+    --ink-2:     #3c4a5a;
+    --ink-3:     #6b7785;
+    --ink-4:     #9aa3b1;
+
+    /* NDMC drought classes */
+    --d-none: #e8f3d6;
+    --d0:     #ffff5c;
+    --d1:     #fcd37f;
+    --d2:     #ffaa00;
+    --d3:     #e60000;
+    --d4:     #730000;
+
+    /* Confidence */
+    --conf-high:   #2e7d32;
+    --conf-mod:    #f9a825;
+    --conf-low:    #ef6c00;
+    --conf-review: #c62828;
+
+    /* Status */
+    --good: #2e7d32;
+    --warn: #c47b00;
+    --bad:  #c0392b;
+
+    --shadow-1: 0 1px 2px rgba(15,23,32,.05), 0 1px 3px rgba(15,23,32,.04);
+    --shadow-2: 0 2px 6px rgba(15,23,32,.06), 0 6px 18px rgba(15,23,32,.05);
+
+    --radius:   10px;
+    --radius-s: 6px;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, h4 { margin: 0; font-weight: 600; color: var(--ink); }
+  a { color: var(--brand-mid); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  button { font-family: inherit; cursor: pointer; }
+
+  /* ---------- Top bar ---------- */
+  .topbar {
+    background: linear-gradient(180deg, #163d63 0%, #1e4d7b 100%);
+    color: #fff;
+    padding: 10px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: var(--shadow-1);
+    position: sticky; top: 0; z-index: 50;
+  }
+  .topbar .brand {
+    display: flex; align-items: center; gap: 12px;
+  }
+  .crest {
+    width: 36px; height: 36px; border-radius: 8px;
+    background: #fff;
+    display: grid; place-items: center;
+    color: var(--brand-deep);
+    font-weight: 700;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.4);
+  }
+  .crest svg { width: 24px; height: 24px; }
+  .brand .title { font-size: 15px; font-weight: 600; line-height: 1.1; }
+  .brand .subtitle { font-size: 11px; color: #b8d0e6; letter-spacing: .04em; text-transform: uppercase; }
+
+  .topbar .spacer { flex: 1; }
+
+  .top-meta { display: flex; align-items: center; gap: 14px; font-size: 12px; color: #c8dcef; }
+  .top-meta .pill {
+    background: rgba(255,255,255,.1);
+    padding: 4px 10px;
+    border-radius: 999px;
+    color: #fff;
+    font-weight: 500;
+  }
+
+  .view-toggle {
+    display: inline-flex; padding: 3px;
+    background: rgba(255,255,255,.12);
+    border-radius: 999px;
+    font-size: 12px;
+  }
+  .view-toggle button {
+    background: transparent; border: 0;
+    color: #d3e3f3;
+    padding: 5px 12px;
+    border-radius: 999px;
+  }
+  .view-toggle button.active {
+    background: #fff; color: var(--brand-deep); font-weight: 600;
+  }
+
+  .user-chip {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,.08);
+    padding: 4px 10px 4px 4px;
+    border-radius: 999px;
+    font-size: 12px;
+  }
+  .user-chip .avatar {
+    width: 26px; height: 26px; border-radius: 50%;
+    background: var(--accent);
+    display: grid; place-items: center;
+    color: #fff; font-size: 11px; font-weight: 600;
+  }
+
+  /* ---------- Tabs ---------- */
+  .tabs {
+    background: var(--surface);
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    padding: 0 24px;
+    gap: 4px;
+    position: sticky; top: 56px; z-index: 40;
+  }
+  .tab {
+    border: 0;
+    background: transparent;
+    padding: 14px 14px;
+    color: var(--ink-3);
+    font-size: 13px;
+    font-weight: 500;
+    border-bottom: 2px solid transparent;
+    display: inline-flex; align-items: center; gap: 8px;
+    margin-bottom: -1px;
+  }
+  .tab svg { width: 16px; height: 16px; opacity: .7; }
+  .tab:hover { color: var(--ink); }
+  .tab.active {
+    color: var(--brand-deep);
+    border-bottom-color: var(--brand-deep);
+    font-weight: 600;
+  }
+  .tab.active svg { opacity: 1; }
+  .tab .badge {
+    font-size: 10px; padding: 2px 6px; border-radius: 999px;
+    background: var(--brand-soft); color: var(--brand-deep);
+  }
+
+  /* ---------- Page layout ---------- */
+  .page { padding: 20px 24px 40px; max-width: 1480px; margin: 0 auto; display: none; }
+  .page.active { display: block; }
+
+  .page-head {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    margin-bottom: 18px; gap: 16px; flex-wrap: wrap;
+  }
+  .page-head h2 {
+    font-size: 20px;
+  }
+  .page-head .crumbs {
+    font-size: 12px; color: var(--ink-3); margin-bottom: 4px;
+  }
+  .page-head .actions { display: flex; gap: 8px; }
+
+  .btn {
+    border: 1px solid var(--line);
+    background: #fff;
+    color: var(--ink-2);
+    padding: 7px 12px;
+    border-radius: var(--radius-s);
+    font-size: 12px;
+    font-weight: 500;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn:hover { background: var(--bg); }
+  .btn.primary {
+    background: var(--brand-deep); color: #fff; border-color: var(--brand-deep);
+  }
+  .btn.primary:hover { background: var(--brand-mid); }
+  .btn.ghost { border-color: transparent; }
+  .btn svg { width: 14px; height: 14px; }
+
+  /* ---------- Cards ---------- */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-1);
+  }
+  .card-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .card-head h3 {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--ink-2);
+  }
+  .card-head .sub {
+    font-size: 12px; color: var(--ink-3);
+  }
+  .card-body { padding: 16px; }
+  .card-body.tight { padding: 8px 0; }
+  .card-foot {
+    padding: 10px 16px;
+    border-top: 1px solid var(--line-soft);
+    color: var(--ink-3);
+    font-size: 12px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+
+  /* ---------- Grids ---------- */
+  .grid { display: grid; gap: 16px; }
+  .g-12 { grid-template-columns: repeat(12, 1fr); }
+  .g-2  { grid-template-columns: repeat(2, 1fr); }
+  .g-3  { grid-template-columns: repeat(3, 1fr); }
+  .g-4  { grid-template-columns: repeat(4, 1fr); }
+  .col-3 { grid-column: span 3; } .col-4 { grid-column: span 4; }
+  .col-5 { grid-column: span 5; } .col-6 { grid-column: span 6; }
+  .col-7 { grid-column: span 7; } .col-8 { grid-column: span 8; }
+  .col-9 { grid-column: span 9; } .col-12{ grid-column: span 12; }
+
+  /* ---------- KPI tiles ---------- */
+  .kpi {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    position: relative;
+    overflow: hidden;
+  }
+  .kpi .label {
+    font-size: 11px;
+    color: var(--ink-3);
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    font-weight: 600;
+  }
+  .kpi .value {
+    font-size: 26px;
+    font-weight: 600;
+    color: var(--ink);
+    line-height: 1.1;
+  }
+  .kpi .sub {
+    font-size: 12px;
+    color: var(--ink-3);
+  }
+  .kpi .trend {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 12px; font-weight: 500;
+    padding: 2px 7px; border-radius: 999px;
+    width: fit-content;
+  }
+  .trend.up   { color: var(--bad);  background: #fdecea; }
+  .trend.down { color: var(--good); background: #e7f4e8; }
+  .trend.flat { color: var(--ink-3);background: var(--bg); }
+
+  .kpi.severity-d2 { border-left: 4px solid var(--d2); }
+  .kpi.severity-d1 { border-left: 4px solid var(--d1); }
+  .kpi.severity-good { border-left: 4px solid var(--good); }
+  .kpi.severity-info { border-left: 4px solid var(--brand-mid); }
+
+  /* ---------- Status bar / hero ---------- */
+  .hero {
+    background: linear-gradient(95deg, #fff 60%, #fff7ed 100%);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    display: flex;
+    gap: 24px;
+    align-items: center;
+    box-shadow: var(--shadow-1);
+    margin-bottom: 18px;
+  }
+  .hero .status-dot {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: var(--d2);
+    display: grid; place-items: center;
+    color: #fff;
+    font-weight: 700;
+    box-shadow: 0 0 0 6px rgba(255,170,0,.18);
+    flex-shrink: 0;
+  }
+  .hero h1 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .hero .descr {
+    color: var(--ink-2);
+    font-size: 13px;
+    max-width: 720px;
+  }
+  .hero .meta-row {
+    display: flex; gap: 18px;
+    margin-top: 10px;
+    font-size: 12px; color: var(--ink-3);
+  }
+  .hero .meta-row b { color: var(--ink-2); font-weight: 600; }
+  .hero .right {
+    margin-left: auto;
+    text-align: right;
+    font-size: 12px; color: var(--ink-3);
+  }
+  .hero .right .ts { font-size: 11px; }
+
+  /* ---------- Drought legend ---------- */
+  .legend {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 11px;
+    color: var(--ink-3);
+  }
+  .legend .swatches { display: flex; }
+  .legend .sw {
+    width: 26px; height: 12px;
+    border: 1px solid rgba(0,0,0,.1);
+    border-right: 0;
+  }
+  .legend .sw:last-child { border-right: 1px solid rgba(0,0,0,.1); }
+
+  /* ---------- Map (SVG) ---------- */
+  .map-wrap {
+    position: relative;
+    background: linear-gradient(180deg, #f7fafc, #eef3f7);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .map-wrap svg { display: block; width: 100%; height: auto; }
+  .map-overlay {
+    position: absolute; bottom: 10px; left: 10px;
+    background: rgba(255,255,255,.94);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 11px;
+    color: var(--ink-2);
+    box-shadow: var(--shadow-1);
+  }
+  .map-overlay.tr { left: auto; right: 10px; bottom: auto; top: 10px; }
+
+  .station-dot { fill: #fff; stroke: var(--brand-deep); stroke-width: 1.5; cursor: pointer; }
+  .station-dot.alert { fill: var(--d2); stroke: #fff; stroke-width: 1.5; }
+  .station-dot.offline { fill: #cdd4dd; stroke: #98a3b1; }
+
+  .field-pin { cursor: pointer; }
+
+  /* ---------- Tables ---------- */
+  table.data {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+  }
+  table.data th, table.data td {
+    padding: 9px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  table.data th {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: var(--ink-3);
+    font-weight: 600;
+    background: #fbfbfd;
+    position: sticky; top: 0;
+  }
+  table.data tbody tr:hover { background: var(--brand-soft); }
+  table.data td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  table.data td.center { text-align: center; }
+
+  .chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #fff;
+  }
+  .chip.d-none { background: #6c8b3c; }
+  .chip.d0   { background: #c5b400; color: #1a232e; }
+  .chip.d1   { background: var(--d1); color: #5e3a00; }
+  .chip.d2   { background: var(--d2); color: #fff; }
+  .chip.d3   { background: var(--d3); color: #fff; }
+  .chip.d4   { background: var(--d4); color: #fff; }
+
+  .conf {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 3px 9px; border-radius: 999px;
+    font-size: 11px; font-weight: 600;
+  }
+  .conf .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .conf.high   { background: #e8f5e9; color: var(--conf-high); }
+  .conf.high .dot   { background: var(--conf-high); }
+  .conf.mod    { background: #fff8e1; color: #b27a00; }
+  .conf.mod .dot    { background: var(--conf-mod); }
+  .conf.low    { background: #fff3e0; color: var(--conf-low); }
+  .conf.low .dot    { background: var(--conf-low); }
+  .conf.review { background: #ffebee; color: var(--conf-review); }
+  .conf.review .dot { background: var(--conf-review); }
+
+  /* ---------- Regional list ---------- */
+  .region-row {
+    display: grid; grid-template-columns: 1fr auto auto;
+    align-items: center;
+    padding: 10px 16px;
+    border-top: 1px solid var(--line-soft);
+    gap: 12px;
+  }
+  .region-row:first-child { border-top: 0; }
+  .region-row .name { font-weight: 600; font-size: 13px; }
+  .region-row .sub { font-size: 11px; color: var(--ink-3); }
+  .region-bar {
+    display: flex; height: 8px; width: 160px; border-radius: 4px; overflow: hidden;
+    background: var(--line-soft);
+  }
+  .region-bar span { display: block; height: 100%; }
+
+  /* ---------- Alerts feed ---------- */
+  .alert-item {
+    padding: 12px 16px;
+    border-top: 1px solid var(--line-soft);
+    display: grid; grid-template-columns: 32px 1fr auto; gap: 12px;
+    align-items: flex-start;
+  }
+  .alert-item:first-child { border-top: 0; }
+  .alert-item .icon {
+    width: 28px; height: 28px; border-radius: 6px;
+    background: var(--brand-soft); color: var(--brand-deep);
+    display: grid; place-items: center;
+  }
+  .alert-item .icon.warn { background: #fff3e0; color: var(--conf-low); }
+  .alert-item .icon.bad  { background: #ffebee; color: var(--conf-review); }
+  .alert-item .icon.good { background: #e8f5e9; color: var(--conf-high); }
+  .alert-item .title { font-size: 13px; font-weight: 600; }
+  .alert-item .descr { font-size: 12px; color: var(--ink-3); margin-top: 2px; }
+  .alert-item .ts { font-size: 11px; color: var(--ink-4); white-space: nowrap; }
+
+  /* ---------- Selectors / inputs ---------- */
+  .select {
+    border: 1px solid var(--line);
+    background: #fff;
+    border-radius: var(--radius-s);
+    font-size: 12px;
+    padding: 7px 10px;
+    color: var(--ink-2);
+    min-width: 140px;
+    appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, var(--ink-3) 50%), linear-gradient(135deg, var(--ink-3) 50%, transparent 50%);
+    background-position: calc(100% - 14px) 50%, calc(100% - 9px) 50%;
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+    padding-right: 26px;
+  }
+
+  .toolbar {
+    display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+  }
+  .toolbar label {
+    font-size: 11px; text-transform: uppercase; letter-spacing: .05em;
+    color: var(--ink-3); font-weight: 600; margin-right: 4px;
+  }
+
+  /* ---------- Validation ---------- */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1px;
+    background: var(--line-soft);
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--line-soft);
+  }
+  .stat-grid .stat {
+    background: #fff;
+    padding: 12px 14px;
+  }
+  .stat .lbl { font-size: 11px; color: var(--ink-3); text-transform: uppercase; letter-spacing: .05em; }
+  .stat .val { font-size: 18px; font-weight: 600; }
+  .stat .meta { font-size: 11px; color: var(--ink-3); }
+
+  /* Confusion matrix */
+  .confusion {
+    display: grid;
+    grid-template-columns: 70px repeat(5, 1fr);
+    gap: 2px;
+    font-size: 11px;
+  }
+  .confusion .h, .confusion .row-h { background: #f6f8fa; padding: 6px; text-align: center; font-weight: 600; color: var(--ink-2); }
+  .confusion .row-h { text-align: right; }
+  .confusion .cell {
+    padding: 8px 4px; text-align: center; font-variant-numeric: tabular-nums;
+    background: #fff;
+    border-radius: 3px;
+  }
+  .confusion .cell.diag { font-weight: 700; }
+
+  /* Field reports */
+  .filters {
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  .filter-block .label {
+    font-size: 11px; text-transform: uppercase; letter-spacing: .05em;
+    color: var(--ink-3); font-weight: 600; margin-bottom: 6px;
+  }
+  .checks { display: flex; flex-direction: column; gap: 5px; font-size: 12.5px; color: var(--ink-2); }
+  .checks label { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+  .checks .count { margin-left: auto; color: var(--ink-3); font-size: 11px; }
+
+  .submission {
+    border-top: 1px solid var(--line-soft);
+    padding: 12px 16px;
+    display: grid;
+    grid-template-columns: 56px 1fr auto;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .submission:first-child { border-top: 0; }
+  .submission .photo {
+    width: 56px; height: 56px;
+    border-radius: 6px;
+    background: linear-gradient(135deg, #d6c79f, #8b6f3a);
+    display: grid; place-items: center;
+    color: #fff; font-size: 18px;
+  }
+  .submission .photo.crop { background: linear-gradient(135deg, #c8a554, #6e4d18); }
+  .submission .photo.water { background: linear-gradient(135deg, #6db1d8, #2c6e8f); }
+  .submission .photo.live { background: linear-gradient(135deg, #d2a78f, #7e4a2f); }
+  .submission .photo.veg { background: linear-gradient(135deg, #8db257, #466b25); }
+  .submission .meta { font-size: 11px; color: var(--ink-3); margin-bottom: 3px; }
+  .submission .body { font-size: 13px; color: var(--ink-2); }
+  .submission .quote { font-style: italic; color: var(--ink-2); margin-top: 4px; padding-left: 10px; border-left: 2px solid var(--line); }
+  .submission .actions { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
+
+  /* Bulletin */
+  .bulletin {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-1);
+    overflow: hidden;
+  }
+  .bulletin .cover {
+    background: linear-gradient(135deg, var(--brand-deep), #2c6ea3);
+    color: #fff;
+    padding: 28px 32px;
+    position: relative;
+  }
+  .bulletin .cover .eyebrow {
+    font-size: 11px; text-transform: uppercase; letter-spacing: .15em; opacity: .8;
+  }
+  .bulletin .cover h1 {
+    font-size: 26px; color: #fff; margin: 6px 0 4px;
+  }
+  .bulletin .cover .issue {
+    font-size: 13px; opacity: .85;
+  }
+  .bulletin .cover .badge-row {
+    margin-top: 16px; display: flex; gap: 10px;
+  }
+  .bulletin .cover .badge-row .pill {
+    background: rgba(255,255,255,.18); padding: 5px 11px; border-radius: 999px; font-size: 11px;
+    border: 1px solid rgba(255,255,255,.25);
+  }
+  .bulletin .body {
+    padding: 24px 32px;
+  }
+  .bulletin .body h2 {
+    font-size: 14px; text-transform: uppercase; letter-spacing: .07em;
+    color: var(--brand-deep);
+    border-bottom: 2px solid var(--brand-soft);
+    padding-bottom: 6px; margin: 18px 0 12px;
+  }
+  .bulletin .body h2:first-child { margin-top: 0; }
+  .bulletin .body p { font-size: 13px; color: var(--ink-2); margin: 0 0 10px; }
+  .bulletin .body .callout {
+    background: #fffaf2;
+    border-left: 4px solid var(--accent);
+    padding: 10px 14px;
+    border-radius: 0 6px 6px 0;
+    margin: 12px 0;
+    font-size: 12.5px;
+  }
+  .bulletin .sectorbox {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 8px;
+  }
+  .sectorbox .sec {
+    background: #fafbfc;
+    border: 1px solid var(--line-soft);
+    border-radius: 8px;
+    padding: 12px;
+  }
+  .sectorbox .sec .icon {
+    width: 26px; height: 26px; border-radius: 6px;
+    background: var(--brand-soft); color: var(--brand-deep);
+    display: grid; place-items: center; margin-bottom: 6px;
+  }
+  .sectorbox .sec .name { font-size: 12px; font-weight: 600; }
+  .sectorbox .sec .note { font-size: 11.5px; color: var(--ink-3); margin-top: 2px; }
+  .sectorbox .sec.warn .icon { background: #fff3e0; color: var(--conf-low); }
+  .sectorbox .sec.bad  .icon { background: #ffebee; color: var(--conf-review); }
+  .sectorbox .sec.good .icon { background: #e8f5e9; color: var(--conf-high); }
+
+  /* Bulletin builder */
+  .builder-list {
+    list-style: none; margin: 0; padding: 0;
+  }
+  .builder-list li {
+    display: grid; grid-template-columns: 22px 1fr auto;
+    gap: 10px; align-items: center;
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--line-soft);
+    font-size: 13px;
+  }
+  .builder-list li:last-child { border-bottom: 0; }
+  .builder-list .drag { color: var(--ink-4); font-size: 14px; cursor: grab; }
+  .builder-list .toggle {
+    width: 30px; height: 18px; border-radius: 999px; background: #d3dae3;
+    position: relative; cursor: pointer; transition: background .15s;
+  }
+  .builder-list .toggle.on { background: var(--brand-mid); }
+  .builder-list .toggle::after {
+    content: ""; position: absolute; top: 2px; left: 2px;
+    width: 14px; height: 14px; background: #fff; border-radius: 50%;
+    transition: left .15s;
+  }
+  .builder-list .toggle.on::after { left: 14px; }
+
+  /* Notes */
+  .note {
+    background: #fffbe6;
+    border: 1px dashed #f0d76b;
+    color: #6a5500;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+  }
+
+  /* Sparkline */
+  .spark { width: 100%; height: 30px; }
+
+  /* Misc utility */
+  .row { display: flex; align-items: center; gap: 10px; }
+  .between { display: flex; align-items: center; justify-content: space-between; }
+  .muted { color: var(--ink-3); }
+  .small { font-size: 12px; }
+  .xsmall { font-size: 11px; }
+  .nowrap { white-space: nowrap; }
+
+  /* Tooltips for design notes */
+  .design-note {
+    display: inline-block;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    color: var(--accent);
+    text-align: center;
+    line-height: 16px;
+    font-size: 10px;
+    font-weight: 700;
+    cursor: help;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+  .design-note:hover { background: var(--accent); color: #fff; }
+
+  /* Scrollable card body */
+  .scroll-200 { max-height: 200px; overflow-y: auto; }
+  .scroll-280 { max-height: 280px; overflow-y: auto; }
+  .scroll-360 { max-height: 360px; overflow-y: auto; }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    padding: 20px;
+    color: var(--ink-4);
+    font-size: 11px;
+  }
+
+  /* Public view simplifications (added/removed via JS) */
+  body.public-view .technical-only { display: none !important; }
+  body.public-view .public-only { display: block !important; }
+  .public-only { display: none; }
+
+  /* Responsive */
+  @media (max-width: 1100px) {
+    .col-3, .col-4, .col-5, .col-6, .col-7, .col-8, .col-9 { grid-column: span 12; }
+    .g-4 { grid-template-columns: repeat(2, 1fr); }
+    .bulletin .sectorbox { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============= TOP BAR ============= -->
+<header class="topbar">
+  <div class="brand">
+    <div class="crest">
+      <!-- Stylised drought "drop on cracked earth" -->
+      <svg viewBox="0 0 24 24" fill="none">
+        <path d="M12 2 C8 7 5 11 5 14 a7 7 0 0 0 14 0 c0-3-3-7-7-12z" fill="#1e4d7b"/>
+        <path d="M9 17 l1.5-2 1 1 1.5-2 1 1.5" stroke="#fff" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+      </svg>
+    </div>
+    <div>
+      <div class="title">Eswatini Drought Intelligence Hub</div>
+      <div class="subtitle">NDMA · Technical Working Group · v0.1 design</div>
+    </div>
+  </div>
+  <div class="spacer"></div>
+  <div class="top-meta">
+    <span class="pill">Bulletin period · May 2026</span>
+    <span>Last refresh: 15 May 2026, 06:12 SAST</span>
+  </div>
+  <div class="view-toggle" role="tablist" aria-label="View mode">
+    <button id="btn-tech" class="active" onclick="setView('technical')">Technical</button>
+    <button id="btn-public" onclick="setView('public')">Public</button>
+  </div>
+  <div class="user-chip">
+    <div class="avatar">AT</div>
+    <span>Akvo Tech</span>
+  </div>
+</header>
+
+<!-- ============= TABS ============= -->
+<nav class="tabs">
+  <button class="tab active" data-tab="overview" onclick="goTab('overview')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/></svg>
+    National overview
+  </button>
+  <button class="tab" data-tab="validation" onclick="goTab('validation')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg>
+    Station × satellite validation
+    <span class="badge">59 stations</span>
+  </button>
+  <button class="tab" data-tab="field" onclick="goTab('field')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-7.5-7-12a7 7 0 1 1 14 0c0 4.5-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>
+    Field reports & indigenous knowledge
+    <span class="badge">142 this month</span>
+  </button>
+  <button class="tab" data-tab="bulletin" onclick="goTab('bulletin')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3h9l5 5v13H6z"/><path d="M14 3v6h6"/><path d="M9 13h7M9 17h7"/></svg>
+    Monthly bulletin
+  </button>
+  <div style="flex:1"></div>
+  <button class="tab" style="color:var(--brand-mid)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+    Search
+  </button>
+</nav>
+
+<!-- ============= 1. OVERVIEW ============= -->
+<main id="page-overview" class="page active">
+
+  <!-- Hero status -->
+  <div class="hero">
+    <div class="status-dot">D2</div>
+    <div>
+      <h1>National status: Severe drought (D2) emerging in the Lowveld and southern Shiselweni</h1>
+      <div class="descr">
+        Composite CDI-E indicates worsening conditions across 38% of the country, driven by a precipitation deficit of −58 mm against the 1991–2020 normal and persistent positive LST anomalies. Vegetation response remains lagged in the Highveld; cross-checks with field reports support the satellite signal in the south.
+      </div>
+      <div class="meta-row">
+        <span><b>Composite CDI-E:</b> 0.34 <span class="muted">(−0.12 vs Apr)</span></span>
+        <span><b>Area in D2+:</b> 22.6%</span>
+        <span><b>Confidence:</b> <span class="conf high"><span class="dot"></span>High in Lowveld</span> · <span class="conf mod"><span class="dot"></span>Moderate in Highveld</span></span>
+      </div>
+    </div>
+    <div class="right">
+      <div>Issued 15 May 2026 · 06:00 SAST</div>
+      <div class="ts">Next update: 16 May 2026, 06:00</div>
+      <div style="margin-top:8px">
+        <button class="btn primary" onclick="goTab('bulletin')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+          Generate May bulletin
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI tiles -->
+  <div class="grid g-4" style="margin-bottom:18px">
+    <div class="kpi severity-d2">
+      <span class="label">Composite CDI-E (national)</span>
+      <span class="value">0.34</span>
+      <span class="trend up">▲ 0.12 worse since Apr</span>
+      <svg class="spark" viewBox="0 0 100 30" preserveAspectRatio="none">
+        <polyline points="0,8 10,10 20,9 30,12 40,11 50,14 60,16 70,18 80,20 90,22 100,24"
+          fill="none" stroke="#d4691f" stroke-width="2"/>
+      </svg>
+    </div>
+    <div class="kpi severity-d1">
+      <span class="label">Rainfall vs 30-yr normal</span>
+      <span class="value">−58 mm</span>
+      <span class="sub">Apr–May cumulative · CHIRPS + 59 gauges</span>
+      <svg class="spark" viewBox="0 0 100 30" preserveAspectRatio="none">
+        <polyline points="0,12 10,14 20,15 30,16 40,18 50,17 60,19 70,21 80,22 90,23 100,24"
+          fill="none" stroke="#2e6ca6" stroke-width="2"/>
+      </svg>
+    </div>
+    <div class="kpi severity-info">
+      <span class="label">Active stations reporting</span>
+      <span class="value">54 / 59</span>
+      <span class="sub">5 offline · 2 awaiting QC <a href="#" onclick="goTab('validation');return false">View list</a></span>
+    </div>
+    <div class="kpi severity-good">
+      <span class="label">Field reports (citizen science)</span>
+      <span class="value">142</span>
+      <span class="sub">last 30 days · 87% verified · <a href="#" onclick="goTab('field');return false">Browse →</a></span>
+    </div>
+  </div>
+
+  <!-- Main grid: map + side -->
+  <div class="grid g-12">
+
+    <!-- Composite CDI-E map -->
+    <div class="card col-8">
+      <div class="card-head">
+        <h3>Composite CDI-E surface — May 2026
+          <span class="design-note" title="Built from NDVI + precipitation + LST per NDMC method. Renders the latest 8-day composite at ~1 km resolution.">i</span>
+        </h3>
+        <div class="toolbar">
+          <select class="select">
+            <option>Composite CDI-E</option>
+            <option>Precipitation anomaly</option>
+            <option>NDVI / EVI2 anomaly</option>
+            <option>LST anomaly</option>
+            <option>Satellite − station agreement</option>
+          </select>
+          <select class="select">
+            <option>May 2026 (current)</option>
+            <option>April 2026</option>
+            <option>March 2026</option>
+          </select>
+          <button class="btn ghost"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Export</button>
+        </div>
+      </div>
+      <div class="card-body" style="padding:8px">
+        <div class="map-wrap">
+          <!-- Eswatini composite map -->
+          <svg viewBox="0 0 460 520" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="hatch" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)">
+                <line x1="0" y1="0" x2="0" y2="6" stroke="#000" stroke-opacity=".15" stroke-width="1"/>
+              </pattern>
+              <radialGradient id="gradD2" cx="50%" cy="50%" r="60%">
+                <stop offset="0%" stop-color="#e60000" stop-opacity=".75"/>
+                <stop offset="100%" stop-color="#ffaa00" stop-opacity=".5"/>
+              </radialGradient>
+            </defs>
+
+            <!-- Country outline -->
+            <path id="eswatini" d="
+              M 215 30 L 250 50 L 285 90 L 305 145 L 315 200 L 325 255 L 330 310 L 320 360
+              L 300 405 L 270 440 L 235 465 L 200 470 L 170 458 L 140 425 L 115 380
+              L 100 320 L 95 260 L 100 200 L 115 145 L 140 95 L 175 55 Z"
+              fill="#fcefd6" stroke="#1e4d7b" stroke-width="1.5"/>
+
+            <!-- Drought class patches (clipped via overlap) -->
+            <g style="clip-path: url(#clipCountry);">
+            </g>
+            <clipPath id="clipCountry">
+              <use href="#eswatini"/>
+            </clipPath>
+
+            <g clip-path="url(#clipCountry)">
+              <!-- Highveld (W) - D0/D1 -->
+              <ellipse cx="135" cy="200" rx="80" ry="120" fill="#ffff5c" opacity=".55"/>
+              <ellipse cx="155" cy="290" rx="60" ry="60" fill="#fcd37f" opacity=".55"/>
+              <!-- Middleveld - D1 -->
+              <ellipse cx="220" cy="240" rx="80" ry="80" fill="#fcd37f" opacity=".6"/>
+              <!-- Lowveld east - D2 -->
+              <ellipse cx="285" cy="220" rx="60" ry="100" fill="#ffaa00" opacity=".7"/>
+              <ellipse cx="290" cy="320" rx="50" ry="80" fill="#ffaa00" opacity=".75"/>
+              <!-- Southern Shiselweni - D2/D3 hotspot -->
+              <ellipse cx="240" cy="410" rx="65" ry="50" fill="#e60000" opacity=".55"/>
+              <ellipse cx="250" cy="430" rx="35" ry="25" fill="#e60000" opacity=".75"/>
+              <!-- North - D0 -->
+              <ellipse cx="200" cy="80" rx="60" ry="40" fill="#ffff5c" opacity=".5"/>
+            </g>
+
+            <!-- Region boundaries (subtle) -->
+            <g stroke="#1e4d7b" stroke-width="1" stroke-dasharray="3,3" fill="none" opacity=".5">
+              <path d="M 110 165 Q 220 175 320 170"/>
+              <path d="M 105 290 Q 220 290 325 290"/>
+              <path d="M 220 175 Q 240 290 240 410"/>
+            </g>
+
+            <!-- Region labels -->
+            <g font-family="Inter, sans-serif" fill="#1a232e" font-size="11" font-weight="600">
+              <text x="170" y="115">HHOHHO</text>
+              <text x="155" y="245">MANZINI</text>
+              <text x="265" y="240">LUBOMBO</text>
+              <text x="190" y="380">SHISELWENI</text>
+            </g>
+
+            <!-- Cities -->
+            <g font-family="Inter, sans-serif" fill="#1a232e" font-size="9.5">
+              <circle cx="160" cy="170" r="3" fill="#1e4d7b"/>
+              <text x="167" y="173">Mbabane</text>
+              <circle cx="195" cy="220" r="3" fill="#1e4d7b"/>
+              <text x="202" y="223">Manzini</text>
+              <circle cx="285" cy="280" r="3" fill="#1e4d7b"/>
+              <text x="292" y="283">Big Bend</text>
+              <circle cx="200" cy="430" r="3" fill="#1e4d7b"/>
+              <text x="207" y="433">Nhlangano</text>
+              <circle cx="295" cy="210" r="3" fill="#1e4d7b"/>
+              <text x="302" y="213">Siteki</text>
+              <circle cx="155" cy="105" r="3" fill="#1e4d7b"/>
+              <text x="162" y="108">Piggs Peak</text>
+            </g>
+
+            <!-- Sample stations -->
+            <g class="stations">
+              <circle class="station-dot" cx="160" cy="170" r="4"/>
+              <circle class="station-dot" cx="195" cy="220" r="4"/>
+              <circle class="station-dot" cx="155" cy="105" r="4"/>
+              <circle class="station-dot alert" cx="285" cy="280" r="5"/>
+              <circle class="station-dot alert" cx="240" cy="410" r="5"/>
+              <circle class="station-dot alert" cx="270" cy="430" r="5"/>
+              <circle class="station-dot" cx="295" cy="210" r="4"/>
+              <circle class="station-dot" cx="135" cy="240" r="4"/>
+              <circle class="station-dot" cx="180" cy="290" r="4"/>
+              <circle class="station-dot" cx="220" cy="160" r="4"/>
+              <circle class="station-dot" cx="260" cy="160" r="4"/>
+              <circle class="station-dot" cx="120" cy="320" r="4"/>
+              <circle class="station-dot offline" cx="305" cy="330" r="4"/>
+              <circle class="station-dot" cx="200" cy="350" r="4"/>
+              <circle class="station-dot" cx="170" cy="380" r="4"/>
+              <circle class="station-dot" cx="240" cy="280" r="4"/>
+              <circle class="station-dot" cx="200" cy="120" r="4"/>
+              <circle class="station-dot" cx="140" cy="135" r="4"/>
+              <circle class="station-dot offline" cx="225" cy="60" r="4"/>
+              <circle class="station-dot" cx="285" cy="160" r="4"/>
+            </g>
+          </svg>
+
+          <div class="map-overlay">
+            <div style="font-weight:600; margin-bottom:4px;">Drought class · CDI-E</div>
+            <div class="legend">
+              <div class="swatches">
+                <div class="sw" style="background:var(--d-none)" title="None"></div>
+                <div class="sw" style="background:var(--d0)" title="D0"></div>
+                <div class="sw" style="background:var(--d1)" title="D1"></div>
+                <div class="sw" style="background:var(--d2)" title="D2"></div>
+                <div class="sw" style="background:var(--d3)" title="D3"></div>
+                <div class="sw" style="background:var(--d4)" title="D4"></div>
+              </div>
+              <span>None → Exceptional</span>
+            </div>
+          </div>
+          <div class="map-overlay tr">
+            <div class="row" style="gap:10px">
+              <span><svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="3.5" fill="#fff" stroke="#1e4d7b" stroke-width="1.5"/></svg> Reporting station</span>
+              <span><svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="3.5" fill="#ffaa00" stroke="#fff" stroke-width="1.5"/></svg> Drought alert</span>
+              <span><svg width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="3.5" fill="#cdd4dd" stroke="#98a3b1" stroke-width="1.5"/></svg> Offline</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card-foot">
+        <span>Source: NDMC CDI-E (8-day composite, May 8 2026) · CHIRPS 2.0 · 59-station network · Hub processing v0.1</span>
+        <a href="#">Methodology →</a>
+      </div>
+    </div>
+
+    <!-- Side: regional breakdown + alerts -->
+    <div class="col-4">
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-head">
+          <h3>By region</h3>
+          <span class="sub">% of area in each class</span>
+        </div>
+        <div class="card-body tight">
+          <div class="region-row">
+            <div>
+              <div class="name">Lubombo <span class="chip d2">D2</span></div>
+              <div class="sub">Lowveld · 12 stations · 4 alerts</div>
+            </div>
+            <div class="region-bar" title="None 5 · D0 15 · D1 25 · D2 38 · D3 17">
+              <span style="width:5%;background:var(--d-none)"></span>
+              <span style="width:15%;background:var(--d0)"></span>
+              <span style="width:25%;background:var(--d1)"></span>
+              <span style="width:38%;background:var(--d2)"></span>
+              <span style="width:17%;background:var(--d3)"></span>
+            </div>
+            <div class="muted xsmall">▲ worsening</div>
+          </div>
+          <div class="region-row">
+            <div>
+              <div class="name">Shiselweni <span class="chip d2">D2</span></div>
+              <div class="sub">Mixed · 14 stations · 3 alerts</div>
+            </div>
+            <div class="region-bar">
+              <span style="width:8%;background:var(--d-none)"></span>
+              <span style="width:18%;background:var(--d0)"></span>
+              <span style="width:28%;background:var(--d1)"></span>
+              <span style="width:32%;background:var(--d2)"></span>
+              <span style="width:14%;background:var(--d3)"></span>
+            </div>
+            <div class="muted xsmall">▲ worsening</div>
+          </div>
+          <div class="region-row">
+            <div>
+              <div class="name">Manzini <span class="chip d1">D1</span></div>
+              <div class="sub">Middleveld · 18 stations · 1 alert</div>
+            </div>
+            <div class="region-bar">
+              <span style="width:18%;background:var(--d-none)"></span>
+              <span style="width:32%;background:var(--d0)"></span>
+              <span style="width:35%;background:var(--d1)"></span>
+              <span style="width:12%;background:var(--d2)"></span>
+              <span style="width:3%;background:var(--d3)"></span>
+            </div>
+            <div class="muted xsmall">→ stable</div>
+          </div>
+          <div class="region-row">
+            <div>
+              <div class="name">Hhohho <span class="chip d0">D0</span></div>
+              <div class="sub">Highveld · 15 stations · 0 alerts</div>
+            </div>
+            <div class="region-bar">
+              <span style="width:42%;background:var(--d-none)"></span>
+              <span style="width:35%;background:var(--d0)"></span>
+              <span style="width:18%;background:var(--d1)"></span>
+              <span style="width:5%;background:var(--d2)"></span>
+            </div>
+            <div class="muted xsmall">→ stable</div>
+          </div>
+        </div>
+        <div class="card-foot">
+          <span>Also broken down by agro-ecological zone</span>
+          <a href="#">Switch view →</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h3>Recent alerts & changes</h3>
+          <a href="#" class="small">View all</a>
+        </div>
+        <div class="card-body tight scroll-280">
+          <div class="alert-item">
+            <div class="icon bad">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01M5.07 19h13.86A2 2 0 0 0 20.66 16L13.73 4a2 2 0 0 0-3.46 0L3.34 16A2 2 0 0 0 5.07 19z"/></svg>
+            </div>
+            <div>
+              <div class="title">Lavumisa station: SPI-3 dropped to −1.8</div>
+              <div class="descr">Crossed severe threshold. Satellite agrees (CDI-E 0.21). Confidence: high.</div>
+            </div>
+            <div class="ts">2h ago</div>
+          </div>
+          <div class="alert-item">
+            <div class="icon warn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+            </div>
+            <div>
+              <div class="title">Disagreement flag: Piggs Peak</div>
+              <div class="descr">Gauge shows normal rainfall; CHIRPS underestimates by 32 mm. Likely topographic effect — review queued.</div>
+            </div>
+            <div class="ts">6h ago</div>
+          </div>
+          <div class="alert-item">
+            <div class="icon good">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 13l4 4L19 7"/></svg>
+            </div>
+            <div>
+              <div class="title">14 field reports verified by TWG</div>
+              <div class="descr">Crop stress in Shiselweni corroborates D2 classification.</div>
+            </div>
+            <div class="ts">12h ago</div>
+          </div>
+          <div class="alert-item">
+            <div class="icon">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M12 3v18"/></svg>
+            </div>
+            <div>
+              <div class="title">New station online: Sithobela</div>
+              <div class="descr">First soil-moisture readings ingested. 14 days until baseline available.</div>
+            </div>
+            <div class="ts">1d ago</div>
+          </div>
+          <div class="alert-item">
+            <div class="icon warn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v6l4 2"/></svg>
+            </div>
+            <div>
+              <div class="title">Vegetation lag detected — Middleveld</div>
+              <div class="descr">EVI2 anomaly trailing rainfall deficit by ~2 weeks. Watch list.</div>
+            </div>
+            <div class="ts">2d ago</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom row: Confidence map + agreement summary -->
+    <div class="card col-7">
+      <div class="card-head">
+        <h3>Satellite × station agreement
+          <span class="design-note" title="Per the scientific brief: a station-to-pixel comparison flagged as High / Moderate / Low / Review-required. Do not force agreement; mismatches are diagnostic.">i</span>
+        </h3>
+        <div class="legend">
+          <span class="conf high"><span class="dot"></span>High</span>
+          <span class="conf mod"><span class="dot"></span>Moderate</span>
+          <span class="conf low"><span class="dot"></span>Low</span>
+          <span class="conf review"><span class="dot"></span>Review</span>
+        </div>
+      </div>
+      <div class="card-body" style="padding:8px">
+        <div class="map-wrap">
+          <svg viewBox="0 0 460 360" xmlns="http://www.w3.org/2000/svg">
+            <path d="M 215 20 L 250 35 L 285 65 L 305 110 L 315 155 L 325 200 L 320 250
+                     L 300 290 L 270 315 L 235 330 L 200 333 L 170 322 L 140 295
+                     L 115 255 L 100 215 L 95 170 L 100 130 L 115 95 L 140 65 L 175 35 Z"
+                  fill="#fcefd6" stroke="#1e4d7b" stroke-width="1.5"/>
+            <clipPath id="clipCountry2">
+              <path d="M 215 20 L 250 35 L 285 65 L 305 110 L 315 155 L 325 200 L 320 250
+                       L 300 290 L 270 315 L 235 330 L 200 333 L 170 322 L 140 295
+                       L 115 255 L 100 215 L 95 170 L 100 130 L 115 95 L 140 65 L 175 35 Z"/>
+            </clipPath>
+            <g clip-path="url(#clipCountry2)">
+              <!-- Confidence patches -->
+              <ellipse cx="280" cy="240" rx="80" ry="80" fill="#2e7d32" opacity=".55"/>
+              <ellipse cx="240" cy="280" rx="60" ry="40" fill="#2e7d32" opacity=".6"/>
+              <ellipse cx="200" cy="200" rx="70" ry="60" fill="#f9a825" opacity=".55"/>
+              <ellipse cx="155" cy="160" rx="60" ry="80" fill="#ef6c00" opacity=".55"/>
+              <ellipse cx="155" cy="100" rx="40" ry="40" fill="#c62828" opacity=".55"/>
+              <ellipse cx="200" cy="80"  rx="40" ry="35" fill="#f9a825" opacity=".5"/>
+              <ellipse cx="180" cy="280" rx="50" ry="40" fill="#f9a825" opacity=".55"/>
+            </g>
+            <g class="stations">
+              <circle class="station-dot" cx="155" cy="100" r="4"/>
+              <circle class="station-dot" cx="160" cy="160" r="4"/>
+              <circle class="station-dot" cx="200" cy="200" r="4"/>
+              <circle class="station-dot" cx="280" cy="240" r="4"/>
+              <circle class="station-dot" cx="240" cy="280" r="4"/>
+              <circle class="station-dot" cx="180" cy="300" r="4"/>
+              <circle class="station-dot" cx="135" cy="220" r="4"/>
+              <circle class="station-dot" cx="220" cy="120" r="4"/>
+              <circle class="station-dot" cx="290" cy="170" r="4"/>
+              <circle class="station-dot" cx="200" cy="80" r="4"/>
+            </g>
+          </svg>
+          <div class="map-overlay">
+            <b>Confidence layer</b> — derived per station-pixel pair from r, RMSE & class agreement
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card col-5">
+      <div class="card-head">
+        <h3>Confidence summary</h3>
+        <span class="sub">Across 54 reporting stations</span>
+      </div>
+      <div class="card-body">
+        <div class="grid g-2" style="gap:8px;">
+          <div class="kpi" style="padding:12px">
+            <span class="label">High confidence</span>
+            <span class="value" style="color:var(--conf-high)">28</span>
+            <span class="sub">52% of stations · agreement r > 0.8</span>
+          </div>
+          <div class="kpi" style="padding:12px">
+            <span class="label">Moderate</span>
+            <span class="value" style="color:var(--conf-mod)">14</span>
+            <span class="sub">26% · partial agreement</span>
+          </div>
+          <div class="kpi" style="padding:12px">
+            <span class="label">Low</span>
+            <span class="value" style="color:var(--conf-low)">8</span>
+            <span class="sub">15% · weak agreement</span>
+          </div>
+          <div class="kpi" style="padding:12px">
+            <span class="label">Review required</span>
+            <span class="value" style="color:var(--conf-review)">4</span>
+            <span class="sub">7% · Piggs Peak, Kubuta, +2</span>
+          </div>
+        </div>
+        <div class="note" style="margin-top:12px">
+          <b>Design note:</b> Following the CHIRPS validation precedent (Piggs Peak, Kubuta), the Hub does not force agreement.
+          Stations in the Review queue surface to the Technical Working Group with a context bundle (terrain, land cover, recent QC notes).
+        </div>
+      </div>
+      <div class="card-foot">
+        <a href="#" onclick="goTab('validation');return false">Open station × satellite validation →</a>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- ============= 2. VALIDATION ============= -->
+<main id="page-validation" class="page">
+
+  <div class="page-head">
+    <div>
+      <div class="crumbs">Drought hub › Validation</div>
+      <h2>Station × satellite validation</h2>
+    </div>
+    <div class="actions">
+      <button class="btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17v3h3M3 7V4h3M21 7V4h-3M21 17v3h-3"/></svg>Compare two stations</button>
+      <button class="btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Export CSV</button>
+      <button class="btn primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 13l4 4L19 7"/></svg>Validate batch</button>
+    </div>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-body" style="padding:12px 16px">
+      <div class="toolbar">
+        <label>Station</label>
+        <select class="select" style="min-width:200px">
+          <option>Big Bend (BB-014) · Lowveld</option>
+          <option>Mbabane (HH-001) · Highveld</option>
+          <option>Piggs Peak (HH-007) · Highveld NW ⚠ review</option>
+          <option>Lavumisa (SH-022) · Lowveld S</option>
+          <option>Manzini (MN-009) · Middleveld</option>
+          <option>Nhlangano (SH-018) · Shiselweni</option>
+          <option>Siteki (LB-031) · Lubombo Plateau</option>
+          <option>Hlatikulu (SH-019) · Highveld S</option>
+        </select>
+        <label>Satellite product</label>
+        <select class="select" style="min-width:170px">
+          <option>CHIRPS 2.0 (rainfall)</option>
+          <option>MOD11 LST (temperature)</option>
+          <option>SMAP soil moisture</option>
+          <option>MOD13 EVI2 / NDVI</option>
+          <option>NDMC composite CDI-E</option>
+        </select>
+        <label>Variable</label>
+        <select class="select"><option>Precipitation (mm)</option><option>SPI-1</option><option>SPI-3</option><option>Anomaly (%)</option></select>
+        <label>Window</label>
+        <select class="select"><option>3×3 pixels (~9 km²)</option><option>1 pixel (nearest)</option><option>5×5 pixels</option></select>
+        <label>Period</label>
+        <select class="select"><option>Last 24 months</option><option>Last 12 months</option><option>Last 5 years</option><option>Custom…</option></select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Station context strip -->
+  <div class="grid g-12">
+    <div class="card col-4">
+      <div class="card-head">
+        <h3>Big Bend (BB-014)</h3>
+        <span class="conf high"><span class="dot"></span>High confidence</span>
+      </div>
+      <div class="card-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:12.5px;">
+          <div><div class="muted xsmall">Region</div><div>Lubombo / Lowveld</div></div>
+          <div><div class="muted xsmall">Elevation</div><div>104 m</div></div>
+          <div><div class="muted xsmall">Coordinates</div><div>−26.83°, 31.93°</div></div>
+          <div><div class="muted xsmall">Land cover</div><div>Sugarcane / savanna</div></div>
+          <div><div class="muted xsmall">Sensors</div><div>Rain, T, soil moisture</div></div>
+          <div><div class="muted xsmall">Operator</div><div>NDMA / RSSC</div></div>
+          <div><div class="muted xsmall">First record</div><div>2014-09-01</div></div>
+          <div><div class="muted xsmall">Last QC</div><div>2026-05-12</div></div>
+        </div>
+        <div class="note" style="margin-top:14px">
+          Pairing window: nearest 3 × 3 CHIRPS pixels (~9 km²). Excluded values flagged by QC (3 in last 12 mo).
+        </div>
+      </div>
+    </div>
+
+    <!-- Statistics card -->
+    <div class="card col-8">
+      <div class="card-head">
+        <h3>Validation statistics — CHIRPS rainfall vs gauge (last 24 mo)</h3>
+        <span class="sub">n = 24 monthly pairs · QC passed</span>
+      </div>
+      <div class="card-body">
+        <div class="stat-grid" style="grid-template-columns:repeat(4,1fr)">
+          <div class="stat">
+            <div class="lbl">Pearson r</div>
+            <div class="val">0.91</div>
+            <div class="meta">95% CI: 0.82–0.96</div>
+          </div>
+          <div class="stat">
+            <div class="lbl">Spearman ρ</div>
+            <div class="val">0.88</div>
+            <div class="meta">rank-based</div>
+          </div>
+          <div class="stat">
+            <div class="lbl">Bias</div>
+            <div class="val" style="color:var(--bad)">+8.4 mm</div>
+            <div class="meta">CHIRPS overestimates</div>
+          </div>
+          <div class="stat">
+            <div class="lbl">MAE</div>
+            <div class="val">12.1 mm</div>
+            <div class="meta">Mean absolute error</div>
+          </div>
+          <div class="stat">
+            <div class="lbl">RMSE</div>
+            <div class="val">17.6 mm</div>
+            <div class="meta">σ of residuals: 15.4</div>
+          </div>
+          <div class="stat">
+            <div class="lbl">Slope</div>
+            <div class="val">1.04</div>
+            <div class="meta">Intercept: 6.2 mm</div>
+          </div>
+          <div class="stat">
+            <div class="lbl">Class agreement</div>
+            <div class="val">79%</div>
+            <div class="meta">Hit rate (D-class)</div>
+          </div>
+          <div class="stat">
+            <div class="lbl">False-alarm ratio</div>
+            <div class="val">0.12</div>
+            <div class="meta">Misses: 0.09</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Time series -->
+    <div class="card col-12">
+      <div class="card-head">
+        <h3>Time series — gauge vs CHIRPS at Big Bend (Jun 2024 – May 2026)</h3>
+        <div class="legend">
+          <span class="row"><svg width="22" height="6"><rect width="22" height="3" y="1.5" fill="#1e4d7b"/></svg> Gauge</span>
+          <span class="row"><svg width="22" height="6"><line x1="0" y1="3" x2="22" y2="3" stroke="#d4691f" stroke-width="2" stroke-dasharray="3,3"/></svg> CHIRPS</span>
+          <span class="row"><svg width="22" height="10"><rect x="0" y="0" width="22" height="10" fill="#fcd37f" opacity=".5"/></svg> Disagreement events</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <svg viewBox="0 0 1000 280" preserveAspectRatio="none" style="width:100%;height:280px">
+          <!-- grid -->
+          <g stroke="#eef0f3">
+            <line x1="40" y1="30"  x2="980" y2="30"/>
+            <line x1="40" y1="80"  x2="980" y2="80"/>
+            <line x1="40" y1="130" x2="980" y2="130"/>
+            <line x1="40" y1="180" x2="980" y2="180"/>
+            <line x1="40" y1="230" x2="980" y2="230"/>
+          </g>
+          <g font-size="10" fill="#9aa3b1" font-family="Inter, sans-serif">
+            <text x="0" y="34">200</text>
+            <text x="0" y="84">150</text>
+            <text x="0" y="134">100</text>
+            <text x="0" y="184">50</text>
+            <text x="0" y="234">0</text>
+          </g>
+          <!-- axis -->
+          <line x1="40" y1="230" x2="980" y2="230" stroke="#9aa3b1"/>
+          <line x1="40" y1="30"  x2="40"  y2="230" stroke="#9aa3b1"/>
+
+          <!-- Disagreement bands -->
+          <rect x="270" y="30" width="60" height="200" fill="#fcd37f" opacity=".25"/>
+          <rect x="690" y="30" width="50" height="200" fill="#e60000" opacity=".15"/>
+
+          <!-- Gauge bars -->
+          <g fill="#1e4d7b">
+            <rect x="50"  y="70"  width="20" height="160"/>
+            <rect x="90"  y="100" width="20" height="130"/>
+            <rect x="130" y="160" width="20" height="70"/>
+            <rect x="170" y="190" width="20" height="40"/>
+            <rect x="210" y="200" width="20" height="30"/>
+            <rect x="250" y="210" width="20" height="20"/>
+            <rect x="290" y="180" width="20" height="50"/>
+            <rect x="330" y="120" width="20" height="110"/>
+            <rect x="370" y="80"  width="20" height="150"/>
+            <rect x="410" y="50"  width="20" height="180"/>
+            <rect x="450" y="60"  width="20" height="170"/>
+            <rect x="490" y="100" width="20" height="130"/>
+            <rect x="530" y="150" width="20" height="80"/>
+            <rect x="570" y="170" width="20" height="60"/>
+            <rect x="610" y="180" width="20" height="50"/>
+            <rect x="650" y="195" width="20" height="35"/>
+            <rect x="690" y="205" width="20" height="25"/>
+            <rect x="730" y="200" width="20" height="30"/>
+            <rect x="770" y="170" width="20" height="60"/>
+            <rect x="810" y="130" width="20" height="100"/>
+            <rect x="850" y="100" width="20" height="130"/>
+            <rect x="890" y="140" width="20" height="90"/>
+            <rect x="930" y="180" width="20" height="50"/>
+          </g>
+          <!-- CHIRPS line (slightly different) -->
+          <polyline fill="none" stroke="#d4691f" stroke-width="2.2" stroke-dasharray="4,4" points="
+            60,80 100,108 140,162 180,188 220,196 260,204 300,164 340,128 380,90
+            420,58 460,68 500,108 540,156 580,176 620,188 660,200 700,180 740,200
+            780,176 820,140 860,108 900,148 940,184"/>
+          <!-- Time labels -->
+          <g font-size="10" fill="#6b7785" font-family="Inter, sans-serif">
+            <text x="55"  y="252">Jun 24</text>
+            <text x="200" y="252">Oct 24</text>
+            <text x="370" y="252">Feb 25</text>
+            <text x="540" y="252">Jun 25</text>
+            <text x="710" y="252">Oct 25</text>
+            <text x="880" y="252">Feb 26</text>
+            <text x="935" y="266" fill="#c62828">May 26</text>
+          </g>
+
+          <!-- Annotation -->
+          <g font-size="10" fill="#1a232e" font-family="Inter, sans-serif">
+            <line x1="715" y1="40" x2="715" y2="60" stroke="#c62828" stroke-width="1"/>
+            <text x="610" y="20" fill="#c62828">Oct '25 disagreement: gauge captured a localised storm not visible to CHIRPS</text>
+          </g>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Scatter and confusion matrix and lag -->
+    <div class="card col-5">
+      <div class="card-head">
+        <h3>Scatter — gauge vs CHIRPS</h3>
+        <span class="sub">y = 1.04x + 6.2  ·  R² = 0.83</span>
+      </div>
+      <div class="card-body">
+        <svg viewBox="0 0 360 300" style="width:100%;height:300px">
+          <g stroke="#eef0f3">
+            <line x1="40" y1="40"  x2="340" y2="40"/>
+            <line x1="40" y1="100" x2="340" y2="100"/>
+            <line x1="40" y1="160" x2="340" y2="160"/>
+            <line x1="40" y1="220" x2="340" y2="220"/>
+          </g>
+          <line x1="40" y1="260" x2="340" y2="260" stroke="#9aa3b1"/>
+          <line x1="40" y1="20"  x2="40"  y2="260" stroke="#9aa3b1"/>
+          <!-- 1:1 line -->
+          <line x1="40" y1="260" x2="320" y2="40" stroke="#9aa3b1" stroke-dasharray="3,3"/>
+          <!-- regression line slightly above -->
+          <line x1="40" y1="252" x2="320" y2="32" stroke="#d4691f" stroke-width="2"/>
+          <!-- scatter points (24 monthly) -->
+          <g fill="#1e4d7b" opacity=".75">
+            <circle cx="60"  cy="248" r="4"/>
+            <circle cx="80"  cy="234" r="4"/>
+            <circle cx="100" cy="220" r="4"/>
+            <circle cx="115" cy="208" r="4"/>
+            <circle cx="135" cy="195" r="4"/>
+            <circle cx="155" cy="180" r="4"/>
+            <circle cx="175" cy="158" r="4"/>
+            <circle cx="190" cy="142" r="4"/>
+            <circle cx="205" cy="124" r="4"/>
+            <circle cx="220" cy="108" r="4"/>
+            <circle cx="240" cy="98"  r="4"/>
+            <circle cx="260" cy="80"  r="4"/>
+            <circle cx="275" cy="62"  r="4"/>
+            <circle cx="290" cy="44"  r="4"/>
+            <circle cx="170" cy="120" r="4" fill="#c62828"/>
+            <circle cx="100" cy="170" r="4" fill="#c62828"/>
+            <circle cx="220" cy="200" r="4" fill="#c62828"/>
+          </g>
+          <g font-size="10" fill="#6b7785" font-family="Inter, sans-serif">
+            <text x="170" y="290" text-anchor="middle">Gauge rainfall (mm)</text>
+            <text x="20" y="140" transform="rotate(-90 20 140)" text-anchor="middle">CHIRPS rainfall (mm)</text>
+            <text x="320" y="50" fill="#9aa3b1">1:1</text>
+            <text x="320" y="32" fill="#d4691f">fit</text>
+          </g>
+        </svg>
+      </div>
+      <div class="card-foot">
+        Highlighted (red) points are disagreement events queued for review.
+      </div>
+    </div>
+
+    <div class="card col-4">
+      <div class="card-head">
+        <h3>Drought-class confusion matrix</h3>
+        <span class="sub">Hit 79% · Miss 9% · FA 12%</span>
+      </div>
+      <div class="card-body">
+        <div style="font-size:11px;color:var(--ink-3);margin-bottom:8px">CHIRPS class (predicted) ↑   ·   Gauge class (observed) →</div>
+        <div class="confusion">
+          <div></div>
+          <div class="h">None</div><div class="h">D0</div><div class="h">D1</div><div class="h">D2</div><div class="h">D3</div>
+          <div class="row-h">None</div>
+            <div class="cell diag" style="background:#e8f5e9">7</div>
+            <div class="cell" style="background:#fff8e1">1</div>
+            <div class="cell">0</div><div class="cell">0</div><div class="cell">0</div>
+          <div class="row-h">D0</div>
+            <div class="cell" style="background:#fff8e1">1</div>
+            <div class="cell diag" style="background:#e8f5e9">5</div>
+            <div class="cell" style="background:#fff8e1">1</div>
+            <div class="cell">0</div><div class="cell">0</div>
+          <div class="row-h">D1</div>
+            <div class="cell">0</div>
+            <div class="cell" style="background:#fff8e1">1</div>
+            <div class="cell diag" style="background:#e8f5e9">3</div>
+            <div class="cell" style="background:#fff8e1">1</div>
+            <div class="cell">0</div>
+          <div class="row-h">D2</div>
+            <div class="cell">0</div><div class="cell">0</div>
+            <div class="cell" style="background:#fff8e1">1</div>
+            <div class="cell diag" style="background:#e8f5e9">2</div>
+            <div class="cell">0</div>
+          <div class="row-h">D3</div>
+            <div class="cell">0</div><div class="cell">0</div><div class="cell">0</div>
+            <div class="cell" style="background:#fff8e1">1</div>
+            <div class="cell diag" style="background:#e8f5e9">0</div>
+        </div>
+        <div class="note" style="margin-top:10px">
+          Threshold-based, computed monthly. Hub also reports per-class precision/recall in Export CSV.
+        </div>
+      </div>
+    </div>
+
+    <div class="card col-3">
+      <div class="card-head">
+        <h3>Vegetation lag</h3>
+        <span class="sub">EVI2 vs SPI-3</span>
+      </div>
+      <div class="card-body">
+        <svg viewBox="0 0 220 220" style="width:100%;height:220px">
+          <g stroke="#eef0f3">
+            <line x1="20" y1="40" x2="200" y2="40"/>
+            <line x1="20" y1="100" x2="200" y2="100"/>
+            <line x1="20" y1="160" x2="200" y2="160"/>
+          </g>
+          <line x1="20" y1="190" x2="200" y2="190" stroke="#9aa3b1"/>
+          <line x1="20" y1="20"  x2="20"  y2="190" stroke="#9aa3b1"/>
+          <!-- bars showing cross-correlation by lag -->
+          <g>
+            <rect x="30"  y="160" width="14" height="30" fill="#1e4d7b" opacity=".4"/>
+            <rect x="50"  y="130" width="14" height="60" fill="#1e4d7b" opacity=".55"/>
+            <rect x="70"  y="80"  width="14" height="110" fill="#1e4d7b" opacity=".75"/>
+            <rect x="90"  y="50"  width="14" height="140" fill="#1e4d7b"/>
+            <rect x="110" y="40"  width="14" height="150" fill="#d4691f"/>
+            <rect x="130" y="60"  width="14" height="130" fill="#1e4d7b" opacity=".75"/>
+            <rect x="150" y="120" width="14" height="70" fill="#1e4d7b" opacity=".55"/>
+            <rect x="170" y="155" width="14" height="35" fill="#1e4d7b" opacity=".4"/>
+          </g>
+          <g font-size="9" fill="#6b7785" font-family="Inter, sans-serif">
+            <text x="34"  y="205">−4w</text>
+            <text x="74"  y="205">−2w</text>
+            <text x="114" y="205">0</text>
+            <text x="154" y="205">+2w</text>
+            <text x="183" y="205">+4w</text>
+            <text x="60"  y="35" fill="#d4691f">Peak r at +2 weeks</text>
+          </g>
+        </svg>
+        <div class="note" style="margin-top:6px">
+          Vegetation response trails rainfall deficit by ~2 weeks here.
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom: stations table -->
+    <div class="card col-12">
+      <div class="card-head">
+        <h3>All stations · validation snapshot</h3>
+        <div class="toolbar">
+          <select class="select"><option>All variables</option><option>Rainfall</option><option>LST</option><option>Soil moisture</option></select>
+          <select class="select"><option>All confidence</option><option>Review only</option><option>High only</option></select>
+          <select class="select"><option>All regions</option><option>Hhohho</option><option>Manzini</option><option>Lubombo</option><option>Shiselweni</option></select>
+          <input class="select" placeholder="Search station…" style="background-image:none;padding-right:10px;min-width:160px"/>
+        </div>
+      </div>
+      <div class="card-body" style="padding:0">
+        <div style="max-height:340px;overflow:auto">
+        <table class="data">
+          <thead>
+            <tr>
+              <th>Station</th>
+              <th>Region · zone</th>
+              <th class="num">r</th>
+              <th class="num">Bias (mm)</th>
+              <th class="num">RMSE</th>
+              <th class="num">Class agree</th>
+              <th>Current class</th>
+              <th>Confidence</th>
+              <th>Trend</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><b>Big Bend</b><div class="muted xsmall">BB-014</div></td>
+              <td>Lubombo · Lowveld</td>
+              <td class="num">0.91</td><td class="num">+8.4</td><td class="num">17.6</td><td class="num">79%</td>
+              <td><span class="chip d2">D2</span></td>
+              <td><span class="conf high"><span class="dot"></span>High</span></td>
+              <td><svg class="spark" viewBox="0 0 60 20"><polyline points="0,12 10,11 20,13 30,12 40,14 50,16 60,18" fill="none" stroke="#d4691f" stroke-width="1.6"/></svg></td>
+              <td><a href="#">Open →</a></td>
+            </tr>
+            <tr>
+              <td><b>Mbabane</b><div class="muted xsmall">HH-001</div></td>
+              <td>Hhohho · Highveld</td>
+              <td class="num">0.84</td><td class="num">−4.2</td><td class="num">14.8</td><td class="num">82%</td>
+              <td><span class="chip d0">D0</span></td>
+              <td><span class="conf high"><span class="dot"></span>High</span></td>
+              <td><svg class="spark" viewBox="0 0 60 20"><polyline points="0,8 10,9 20,8 30,10 40,9 50,11 60,10" fill="none" stroke="#2e6ca6" stroke-width="1.6"/></svg></td>
+              <td><a href="#">Open →</a></td>
+            </tr>
+            <tr style="background:#fff8e6">
+              <td><b>Piggs Peak</b><div class="muted xsmall">HH-007</div></td>
+              <td>Hhohho · Highveld NW</td>
+              <td class="num" style="color:var(--bad)">0.46</td><td class="num">−32.1</td><td class="num">38.2</td><td class="num">51%</td>
+              <td><span class="chip d1">D1</span></td>
+              <td><span class="conf review"><span class="dot"></span>Review</span></td>
+              <td><svg class="spark" viewBox="0 0 60 20"><polyline points="0,12 10,8 20,14 30,9 40,15 50,7 60,13" fill="none" stroke="#c62828" stroke-width="1.6"/></svg></td>
+              <td><a href="#">Investigate →</a></td>
+            </tr>
+            <tr>
+              <td><b>Lavumisa</b><div class="muted xsmall">SH-022</div></td>
+              <td>Shiselweni · Lowveld S</td>
+              <td class="num">0.89</td><td class="num">+5.1</td><td class="num">15.2</td><td class="num">81%</td>
+              <td><span class="chip d3">D3</span></td>
+              <td><span class="conf high"><span class="dot"></span>High</span></td>
+              <td><svg class="spark" viewBox="0 0 60 20"><polyline points="0,10 10,11 20,13 30,15 40,17 50,18 60,19" fill="none" stroke="#c62828" stroke-width="1.6"/></svg></td>
+              <td><a href="#">Open →</a></td>
+            </tr>
+            <tr>
+              <td><b>Manzini</b><div class="muted xsmall">MN-009</div></td>
+              <td>Manzini · Middleveld</td>
+              <td class="num">0.78</td><td class="num">+2.0</td><td class="num">19.4</td><td class="num">74%</td>
+              <td><span class="chip d1">D1</span></td>
+              <td><span class="conf mod"><span class="dot"></span>Moderate</span></td>
+              <td><svg class="spark" viewBox="0 0 60 20"><polyline points="0,12 10,12 20,12 30,13 40,12 50,13 60,14" fill="none" stroke="#2e6ca6" stroke-width="1.6"/></svg></td>
+              <td><a href="#">Open →</a></td>
+            </tr>
+            <tr style="background:#fff8e6">
+              <td><b>Kubuta</b><div class="muted xsmall">SH-024</div></td>
+              <td>Shiselweni · Middleveld</td>
+              <td class="num" style="color:var(--bad)">0.52</td><td class="num">−18.7</td><td class="num">28.9</td><td class="num">58%</td>
+              <td><span class="chip d2">D2</span></td>
+              <td><span class="conf review"><span class="dot"></span>Review</span></td>
+              <td><svg class="spark" viewBox="0 0 60 20"><polyline points="0,11 10,9 20,12 30,8 40,13 50,9 60,14" fill="none" stroke="#c62828" stroke-width="1.6"/></svg></td>
+              <td><a href="#">Investigate →</a></td>
+            </tr>
+            <tr>
+              <td><b>Nhlangano</b><div class="muted xsmall">SH-018</div></td>
+              <td>Shiselweni · Highveld S</td>
+              <td class="num">0.86</td><td class="num">+3.2</td><td class="num">16.0</td><td class="num">80%</td>
+              <td><span class="chip d2">D2</span></td>
+              <td><span class="conf high"><span class="dot"></span>High</span></td>
+              <td><svg class="spark" viewBox="0 0 60 20"><polyline points="0,10 10,11 20,12 30,13 40,15 50,16 60,17" fill="none" stroke="#d4691f" stroke-width="1.6"/></svg></td>
+              <td><a href="#">Open →</a></td>
+            </tr>
+            <tr>
+              <td><b>Siteki</b><div class="muted xsmall">LB-031</div></td>
+              <td>Lubombo · Plateau</td>
+              <td class="num">0.81</td><td class="num">+6.1</td><td class="num">18.3</td><td class="num">76%</td>
+              <td><span class="chip d1">D1</span></td>
+              <td><span class="conf high"><span class="dot"></span>High</span></td>
+              <td><svg class="spark" viewBox="0 0 60 20"><polyline points="0,11 10,12 20,12 30,13 40,13 50,14 60,15" fill="none" stroke="#d4691f" stroke-width="1.6"/></svg></td>
+              <td><a href="#">Open →</a></td>
+            </tr>
+            <tr>
+              <td><b>Hlatikulu</b><div class="muted xsmall">SH-019</div></td>
+              <td>Shiselweni · Highveld</td>
+              <td class="num">0.83</td><td class="num">−1.2</td><td class="num">15.9</td><td class="num">78%</td>
+              <td><span class="chip d1">D1</span></td>
+              <td><span class="conf high"><span class="dot"></span>High</span></td>
+              <td><svg class="spark" viewBox="0 0 60 20"><polyline points="0,10 10,11 20,11 30,12 40,12 50,13 60,13" fill="none" stroke="#2e6ca6" stroke-width="1.6"/></svg></td>
+              <td><a href="#">Open →</a></td>
+            </tr>
+            <tr>
+              <td><b>Tshaneni</b><div class="muted xsmall">HH-012</div></td>
+              <td>Hhohho · Lowveld N</td>
+              <td class="num">0.72</td><td class="num">+11.5</td><td class="num">22.4</td><td class="num">68%</td>
+              <td><span class="chip d0">D0</span></td>
+              <td><span class="conf low"><span class="dot"></span>Low</span></td>
+              <td><svg class="spark" viewBox="0 0 60 20"><polyline points="0,10 10,12 20,11 30,13 40,12 50,14 60,15" fill="none" stroke="#2e6ca6" stroke-width="1.6"/></svg></td>
+              <td><a href="#">Open →</a></td>
+            </tr>
+          </tbody>
+        </table>
+        </div>
+      </div>
+      <div class="card-foot">
+        <span>10 of 59 shown · sorted by region · QC pass-rate 96%</span>
+        <a href="#">Show all 59 →</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Soil moisture / sugarcane footnote -->
+  <div class="card" style="margin-top:16px">
+    <div class="card-body" style="display:flex;gap:14px;align-items:flex-start">
+      <div style="width:36px;height:36px;border-radius:8px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;flex-shrink:0">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v6M8 6l4 4 4-4M5 14h14M5 18h14"/></svg>
+      </div>
+      <div style="flex:1">
+        <b>Soil-moisture validation expansion</b>
+        <p class="small muted" style="margin:4px 0 0">
+          The 59-station network does not yet provide dense soil-moisture coverage. Per the scientific brief, the Hub is wired to ingest external sources via a "Partner data" channel — including
+          <b>RSSC and Illovo</b> field soil-moisture records (commercial irrigation, primarily Lowveld), with a clearly labelled spatial-representativeness caveat in every map and table that uses them.
+        </p>
+      </div>
+      <button class="btn">Configure partner sources</button>
+    </div>
+  </div>
+</main>
+
+<!-- ============= 3. FIELD REPORTS ============= -->
+<main id="page-field" class="page">
+
+  <div class="page-head">
+    <div>
+      <div class="crumbs">Drought hub › Field reports</div>
+      <h2>Indigenous knowledge & citizen-science reports
+        <span class="design-note" title="Submissions arrive from KoboToolbox forms used by extension officers, chiefdoms and citizen scientists. Each report is geolocated and cross-referenced with the nearest station + satellite pixel.">i</span>
+      </h2>
+    </div>
+    <div class="actions">
+      <button class="btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>New Kobo form</button>
+      <button class="btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Export</button>
+      <button class="btn primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 13l4 4L19 7"/></svg>Verify queue (12)</button>
+    </div>
+  </div>
+
+  <div class="grid g-12">
+    <!-- Filters -->
+    <div class="card col-3">
+      <div class="card-head">
+        <h3>Filters</h3>
+        <a href="#" class="small">Reset</a>
+      </div>
+      <div class="card-body">
+        <div class="filters">
+          <div class="filter-block">
+            <div class="label">Time</div>
+            <select class="select" style="width:100%"><option>Last 30 days</option><option>This bulletin period</option><option>Last 90 days</option><option>Custom…</option></select>
+          </div>
+          <div class="filter-block">
+            <div class="label">Report type</div>
+            <div class="checks">
+              <label><input type="checkbox" checked> Crop stress / failure <span class="count">48</span></label>
+              <label><input type="checkbox" checked> Pasture & livestock <span class="count">34</span></label>
+              <label><input type="checkbox" checked> Water shortage <span class="count">29</span></label>
+              <label><input type="checkbox" checked> Borehole / spring level <span class="count">14</span></label>
+              <label><input type="checkbox" checked> Vegetation greenness <span class="count">11</span></label>
+              <label><input type="checkbox"> Local knowledge / signs <span class="count">6</span></label>
+            </div>
+          </div>
+          <div class="filter-block">
+            <div class="label">Severity (reporter)</div>
+            <div class="checks">
+              <label><input type="checkbox" checked> Severe / extreme <span class="count">31</span></label>
+              <label><input type="checkbox" checked> Moderate <span class="count">62</span></label>
+              <label><input type="checkbox"> Mild <span class="count">49</span></label>
+            </div>
+          </div>
+          <div class="filter-block">
+            <div class="label">Verification status</div>
+            <div class="checks">
+              <label><input type="checkbox" checked> Verified by TWG <span class="count">87</span></label>
+              <label><input type="checkbox" checked> Auto-corroborated <span class="count">38</span></label>
+              <label><input type="checkbox"> Awaiting review <span class="count">12</span></label>
+              <label><input type="checkbox"> Conflicting with satellite <span class="count">5</span></label>
+            </div>
+          </div>
+          <div class="filter-block">
+            <div class="label">Region</div>
+            <div class="checks">
+              <label><input type="checkbox" checked> Hhohho</label>
+              <label><input type="checkbox" checked> Manzini</label>
+              <label><input type="checkbox" checked> Lubombo</label>
+              <label><input type="checkbox" checked> Shiselweni</label>
+            </div>
+          </div>
+          <div class="filter-block">
+            <div class="label">Submitter</div>
+            <div class="checks">
+              <label><input type="checkbox" checked> Extension officers <span class="count">62</span></label>
+              <label><input type="checkbox" checked> Chiefdoms / Tinkhundla <span class="count">41</span></label>
+              <label><input type="checkbox" checked> Citizen scientists <span class="count">29</span></label>
+              <label><input type="checkbox" checked> NGO partners <span class="count">10</span></label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Map of submissions -->
+    <div class="card col-6">
+      <div class="card-head">
+        <h3>Submissions on satellite + station base</h3>
+        <div class="toolbar">
+          <select class="select"><option>Base: CDI-E composite</option><option>Base: Precip anomaly</option><option>Base: Confidence</option><option>Base: Plain map</option></select>
+          <button class="btn ghost"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M12 3l9 9-9 9"/></svg>Cluster</button>
+        </div>
+      </div>
+      <div class="card-body" style="padding:8px">
+        <div class="map-wrap">
+          <svg viewBox="0 0 460 480" xmlns="http://www.w3.org/2000/svg">
+            <path d="M 215 30 L 250 50 L 285 90 L 305 145 L 315 200 L 325 255 L 330 310 L 320 360
+                     L 300 405 L 270 440 L 235 465 L 200 470 L 170 458 L 140 425 L 115 380
+                     L 100 320 L 95 260 L 100 200 L 115 145 L 140 95 L 175 55 Z"
+                  fill="#fcefd6" stroke="#1e4d7b" stroke-width="1.5"/>
+
+            <clipPath id="clipCountry3">
+              <path d="M 215 30 L 250 50 L 285 90 L 305 145 L 315 200 L 325 255 L 330 310 L 320 360
+                       L 300 405 L 270 440 L 235 465 L 200 470 L 170 458 L 140 425 L 115 380
+                       L 100 320 L 95 260 L 100 200 L 115 145 L 140 95 L 175 55 Z"/>
+            </clipPath>
+            <g clip-path="url(#clipCountry3)" opacity=".7">
+              <ellipse cx="135" cy="200" rx="80" ry="120" fill="#ffff5c" opacity=".5"/>
+              <ellipse cx="220" cy="240" rx="80" ry="80" fill="#fcd37f" opacity=".55"/>
+              <ellipse cx="285" cy="220" rx="60" ry="100" fill="#ffaa00" opacity=".65"/>
+              <ellipse cx="290" cy="320" rx="50" ry="80" fill="#ffaa00" opacity=".7"/>
+              <ellipse cx="240" cy="410" rx="65" ry="50" fill="#e60000" opacity=".5"/>
+            </g>
+
+            <!-- Field report pins -->
+            <g class="field-pin">
+              <!-- Crop stress (orange) clustered in Shiselweni & Lowveld -->
+              <circle cx="240" cy="400" r="9" fill="#d4691f" opacity=".85" stroke="#fff" stroke-width="2"/>
+              <circle cx="220" cy="425" r="7" fill="#d4691f" opacity=".85" stroke="#fff" stroke-width="2"/>
+              <circle cx="265" cy="380" r="6" fill="#d4691f" opacity=".85" stroke="#fff" stroke-width="2"/>
+              <circle cx="180" cy="395" r="6" fill="#d4691f" opacity=".85" stroke="#fff" stroke-width="2"/>
+              <circle cx="290" cy="320" r="8" fill="#d4691f" opacity=".85" stroke="#fff" stroke-width="2"/>
+              <circle cx="285" cy="220" r="7" fill="#d4691f" opacity=".85" stroke="#fff" stroke-width="2"/>
+              <circle cx="305" cy="270" r="6" fill="#d4691f" opacity=".85" stroke="#fff" stroke-width="2"/>
+
+              <!-- Water shortage (blue) -->
+              <circle cx="220" cy="200" r="6" fill="#2c6e8f" opacity=".85" stroke="#fff" stroke-width="2"/>
+              <circle cx="195" cy="220" r="7" fill="#2c6e8f" opacity=".85" stroke="#fff" stroke-width="2"/>
+              <circle cx="200" cy="350" r="8" fill="#2c6e8f" opacity=".85" stroke="#fff" stroke-width="2"/>
+              <circle cx="280" cy="230" r="7" fill="#2c6e8f" opacity=".85" stroke="#fff" stroke-width="2"/>
+
+              <!-- Livestock (brown) -->
+              <circle cx="265" cy="300" r="7" fill="#7e4a2f" opacity=".85" stroke="#fff" stroke-width="2"/>
+              <circle cx="155" cy="280" r="6" fill="#7e4a2f" opacity=".85" stroke="#fff" stroke-width="2"/>
+              <circle cx="220" cy="370" r="6" fill="#7e4a2f" opacity=".85" stroke="#fff" stroke-width="2"/>
+
+              <!-- Vegetation/greenness (green) -->
+              <circle cx="170" cy="180" r="5" fill="#466b25" opacity=".85" stroke="#fff" stroke-width="2"/>
+              <circle cx="160" cy="120" r="5" fill="#466b25" opacity=".85" stroke="#fff" stroke-width="2"/>
+              <circle cx="135" cy="320" r="5" fill="#466b25" opacity=".85" stroke="#fff" stroke-width="2"/>
+
+              <!-- Local knowledge (purple) -->
+              <circle cx="200" cy="100" r="5" fill="#6a3b8a" opacity=".85" stroke="#fff" stroke-width="2"/>
+              <circle cx="210" cy="445" r="5" fill="#6a3b8a" opacity=".85" stroke="#fff" stroke-width="2"/>
+
+              <!-- One conflicting report (red ring) -->
+              <circle cx="160" cy="170" r="9" fill="none" stroke="#c62828" stroke-width="2" stroke-dasharray="3,2"/>
+              <circle cx="160" cy="170" r="6" fill="#d4691f" stroke="#fff" stroke-width="2"/>
+            </g>
+
+            <!-- Selected pin call-out -->
+            <g>
+              <line x1="240" y1="400" x2="335" y2="345" stroke="#1e4d7b" stroke-width="1"/>
+              <rect x="335" y="305" width="120" height="80" fill="#fff" stroke="#1e4d7b" rx="4"/>
+              <text x="345" y="322" font-size="10" font-family="Inter, sans-serif" font-weight="600" fill="#1a232e">Selected report</text>
+              <text x="345" y="338" font-size="10" font-family="Inter, sans-serif" fill="#3c4a5a">Crop stress · Maize</text>
+              <text x="345" y="352" font-size="10" font-family="Inter, sans-serif" fill="#3c4a5a">Lavumisa, Shiselweni</text>
+              <text x="345" y="366" font-size="10" font-family="Inter, sans-serif" fill="#2e7d32">✓ Aligns with CDI-E</text>
+              <text x="345" y="380" font-size="9.5" font-family="Inter, sans-serif" fill="#6b7785">14 May · Officer N.D.</text>
+            </g>
+          </svg>
+
+          <div class="map-overlay">
+            <b>Field reports</b>
+            <div class="row" style="gap:10px;margin-top:4px">
+              <span class="row" style="gap:4px"><span style="width:10px;height:10px;border-radius:50%;background:#d4691f;display:inline-block"></span>Crop stress</span>
+              <span class="row" style="gap:4px"><span style="width:10px;height:10px;border-radius:50%;background:#2c6e8f;display:inline-block"></span>Water</span>
+              <span class="row" style="gap:4px"><span style="width:10px;height:10px;border-radius:50%;background:#7e4a2f;display:inline-block"></span>Livestock</span>
+              <span class="row" style="gap:4px"><span style="width:10px;height:10px;border-radius:50%;background:#466b25;display:inline-block"></span>Vegetation</span>
+              <span class="row" style="gap:4px"><span style="width:10px;height:10px;border-radius:50%;background:#6a3b8a;display:inline-block"></span>Local knowledge</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card-foot">
+        <span>113 of 142 reports shown after filters · pin size = severity · dashed ring = conflicts with satellite signal</span>
+        <span><a href="#">Heatmap</a> · <a href="#">3-month animation</a></span>
+      </div>
+    </div>
+
+    <!-- Cross-check panel -->
+    <div class="card col-3">
+      <div class="card-head">
+        <h3>Selected: report #IK-1024
+          <span class="conf high" style="margin-left:6px"><span class="dot"></span>Aligns</span>
+        </h3>
+      </div>
+      <div class="card-body">
+        <div class="small muted">14 May 2026 · 09:14 SAST · Lavumisa, Shiselweni</div>
+        <h4 style="margin-top:8px;font-size:14px">Crop stress — Maize</h4>
+        <div class="small">Reporter: Extension officer N. Dlamini (verified)</div>
+        <p class="small" style="margin:8px 0;color:var(--ink-2)">
+          “Maize across three homesteads has tasselled early and the cobs are not filling. The river is lower than I have seen in May. We last had meaningful rain on 18 March.”
+        </p>
+
+        <div class="stat-grid" style="grid-template-columns:1fr 1fr; margin-top:6px">
+          <div class="stat">
+            <div class="lbl">Nearest station</div>
+            <div class="val" style="font-size:14px">Lavumisa (SH-022)</div>
+            <div class="meta">SPI-3: −1.8 · D3</div>
+          </div>
+          <div class="stat">
+            <div class="lbl">Satellite pixel</div>
+            <div class="val" style="font-size:14px">CDI-E 0.21</div>
+            <div class="meta">EVI2 anomaly: −0.18</div>
+          </div>
+          <div class="stat">
+            <div class="lbl">Distance to station</div>
+            <div class="val" style="font-size:14px">3.2 km</div>
+            <div class="meta">within validation window</div>
+          </div>
+          <div class="stat">
+            <div class="lbl">Cross-check</div>
+            <div class="val" style="font-size:14px;color:var(--conf-high)">Aligns</div>
+            <div class="meta">3 indicators agree</div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:8px;margin-top:14px">
+          <button class="btn primary" style="flex:1">Verify</button>
+          <button class="btn">Reject</button>
+          <button class="btn ghost">⋯</button>
+        </div>
+        <div class="note" style="margin-top:10px">
+          Verified reports feed the bulletin's "Field-corroborated D-class areas" overlay.
+        </div>
+      </div>
+    </div>
+
+    <!-- Submissions list -->
+    <div class="card col-12">
+      <div class="card-head">
+        <h3>Recent submissions</h3>
+        <div class="toolbar">
+          <select class="select"><option>Sort: Newest</option><option>Sort: Severity</option><option>Sort: Conflict first</option></select>
+          <button class="btn">Cards</button>
+          <button class="btn">List</button>
+        </div>
+      </div>
+      <div class="card-body tight scroll-360">
+        <div class="submission">
+          <div class="photo crop">📷</div>
+          <div>
+            <div class="meta">14 May · Lavumisa, Shiselweni · Crop stress · Severity: severe</div>
+            <div class="body">Maize tasselled early; cobs not filling. River level low for May.</div>
+            <div class="quote">“We last had meaningful rain on 18 March.” — N. Dlamini, extension officer</div>
+          </div>
+          <div class="actions">
+            <span class="conf high"><span class="dot"></span>Aligns with CDI-E</span>
+            <span class="small muted">3 indicators agree</span>
+            <button class="btn">Open</button>
+          </div>
+        </div>
+
+        <div class="submission">
+          <div class="photo water">💧</div>
+          <div>
+            <div class="meta">13 May · Big Bend, Lubombo · Water shortage · Severity: severe</div>
+            <div class="body">Two community boreholes dry; communal tap rationed to 3 hours/day.</div>
+            <div class="quote">“Cattle are walking 6 km to the river.” — Citizen scientist, RSSC area</div>
+          </div>
+          <div class="actions">
+            <span class="conf high"><span class="dot"></span>Aligns</span>
+            <span class="small muted">CDI-E 0.27 · SPI-3 −1.6</span>
+            <button class="btn">Open</button>
+          </div>
+        </div>
+
+        <div class="submission">
+          <div class="photo live">🐄</div>
+          <div>
+            <div class="meta">12 May · Siphofaneni, Lubombo · Pasture & livestock · Severity: moderate</div>
+            <div class="body">Dipping tank attendance down; chiefdom reports thin cattle and selling pressure.</div>
+            <div class="quote">“We are starting to sell early — feed prices are rising.”</div>
+          </div>
+          <div class="actions">
+            <span class="conf mod"><span class="dot"></span>Partial agreement</span>
+            <span class="small muted">Vegetation lag suspected</span>
+            <button class="btn">Open</button>
+          </div>
+        </div>
+
+        <div class="submission">
+          <div class="photo veg">🌿</div>
+          <div>
+            <div class="meta">12 May · Mhlosheni, Shiselweni · Vegetation greenness · Severity: moderate</div>
+            <div class="body">Indigenous knowledge: certain pasture grasses have flowered earlier than usual; elders flag as a "thin year" sign.</div>
+          </div>
+          <div class="actions">
+            <span class="conf high"><span class="dot"></span>Aligns</span>
+            <button class="btn">Open</button>
+          </div>
+        </div>
+
+        <div class="submission">
+          <div class="photo crop">🌽</div>
+          <div>
+            <div class="meta">11 May · Hhelehhele, Manzini · Crop stress · Severity: moderate</div>
+            <div class="body">Communal field maize wilting in afternoons even after recent showers.</div>
+          </div>
+          <div class="actions">
+            <span class="conf mod"><span class="dot"></span>Partial agreement</span>
+            <span class="small muted">Local heat stress · LST anomaly +2.4°C</span>
+            <button class="btn">Open</button>
+          </div>
+        </div>
+
+        <div class="submission" style="background:#fff8e6">
+          <div class="photo water">💧</div>
+          <div>
+            <div class="meta">10 May · Mbabane outskirts, Hhohho · Water shortage · Severity: moderate</div>
+            <div class="body">Spring near community garden has slowed to a trickle.</div>
+            <div class="quote">“This spring has not been this low in this season for 15 years.” — Chiefdom elder</div>
+          </div>
+          <div class="actions">
+            <span class="conf review"><span class="dot"></span>Conflicts with CDI-E</span>
+            <span class="small muted">CDI-E shows D0 — Highveld terrain effect suspected</span>
+            <button class="btn">Investigate</button>
+          </div>
+        </div>
+
+        <div class="submission">
+          <div class="photo live">🐐</div>
+          <div>
+            <div class="meta">10 May · Lavumisa, Shiselweni · Pasture & livestock · Severity: severe</div>
+            <div class="body">Goat herd visibly underweight; chiefdom requesting fodder support.</div>
+          </div>
+          <div class="actions">
+            <span class="conf high"><span class="dot"></span>Aligns</span>
+            <button class="btn">Open</button>
+          </div>
+        </div>
+
+        <div class="submission">
+          <div class="photo veg">🌳</div>
+          <div>
+            <div class="meta">9 May · Piggs Peak, Hhohho · Local knowledge · Severity: mild</div>
+            <div class="body">Indigenous indicator: marula trees fruited heavily — elders interpret as anticipation of a dry season.</div>
+          </div>
+          <div class="actions">
+            <span class="conf mod"><span class="dot"></span>Awaiting cross-check</span>
+            <button class="btn">Open</button>
+          </div>
+        </div>
+      </div>
+      <div class="card-foot">
+        <span>Showing 8 of 142 · 12 awaiting verification · 5 conflicts queued for TWG</span>
+        <a href="#">Open Kobo for raw form data →</a>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ============= 4. BULLETIN ============= -->
+<main id="page-bulletin" class="page">
+
+  <div class="page-head">
+    <div>
+      <div class="crumbs">Drought hub › Bulletin</div>
+      <h2>Monthly Drought Bulletin — May 2026 (draft)</h2>
+    </div>
+    <div class="actions">
+      <button class="btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Schedule</button>
+      <button class="btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7l9 6 9-6M3 7v10h18V7"/></svg>Distribution list (47)</button>
+      <button class="btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Download PDF</button>
+      <button class="btn primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>Publish</button>
+    </div>
+  </div>
+
+  <div class="grid g-12">
+    <!-- Builder -->
+    <div class="card col-4">
+      <div class="card-head">
+        <h3>Sections</h3>
+        <span class="sub">drag to reorder</span>
+      </div>
+      <ul class="builder-list">
+        <li><span class="drag">⋮⋮</span><span>Cover & national status</span><span class="toggle on"></span></li>
+        <li><span class="drag">⋮⋮</span><span>Region & agro-zone breakdown</span><span class="toggle on"></span></li>
+        <li><span class="drag">⋮⋮</span><span>Composite CDI-E maps</span><span class="toggle on"></span></li>
+        <li><span class="drag">⋮⋮</span><span>Sat × station agreement map</span><span class="toggle on"></span></li>
+        <li><span class="drag">⋮⋮</span><span>Confidence levels by station</span><span class="toggle on"></span></li>
+        <li><span class="drag">⋮⋮</span><span>Field-corroborated areas</span><span class="toggle on"></span></li>
+        <li><span class="drag">⋮⋮</span><span>Sector implications</span><span class="toggle on"></span></li>
+        <li><span class="drag">⋮⋮</span><span>Priority watch areas</span><span class="toggle on"></span></li>
+        <li><span class="drag">⋮⋮</span><span>Methodology & data sources</span><span class="toggle on"></span></li>
+        <li><span class="drag">⋮⋮</span><span>Public-facing 1-page summary</span><span class="toggle"></span></li>
+      </ul>
+      <div class="card-foot">
+        <span>9 of 10 sections enabled · est. 6 pages</span>
+      </div>
+
+      <div class="card-head" style="border-top:1px solid var(--line)">
+        <h3>Distribution & cadence</h3>
+      </div>
+      <div class="card-body">
+        <div class="small">
+          <div class="row" style="margin-bottom:6px"><b>Cadence:</b> Monthly · 1st of month + on-trigger alerts</div>
+          <div class="row" style="margin-bottom:6px"><b>Trigger:</b> any region in D2+ for 14 days</div>
+          <div class="row" style="margin-bottom:6px"><b>Audiences:</b>
+            <span class="chip d-none" style="margin-left:6px;background:var(--brand-deep)">NDMA</span>
+            <span class="chip d-none" style="background:var(--brand-mid)">TWG</span>
+            <span class="chip d-none" style="background:#5e7e3c">Min. Agriculture</span>
+            <span class="chip d-none" style="background:#2c6e8f">DWA / WASH</span>
+          </div>
+          <div class="row" style="margin-bottom:6px"><b>Channels:</b> Email · Hub dashboard · PDF · WhatsApp digest</div>
+        </div>
+        <div class="note" style="margin-top:8px">
+          Public 1-pager renders as a separate, simpler PDF — no station-level detail, plain language, SiSwati toggle.
+        </div>
+      </div>
+    </div>
+
+    <!-- Bulletin preview -->
+    <div class="col-8">
+      <div class="bulletin">
+        <div class="cover">
+          <div class="eyebrow">Eswatini Drought Intelligence Hub</div>
+          <h1>Monthly Drought Bulletin</h1>
+          <div class="issue">Issue 5 / 2026 · Period: 16 Apr – 15 May 2026 · Issued 15 May 2026</div>
+          <div class="badge-row">
+            <span class="pill">National status: <b>D2 — Severe (emerging)</b></span>
+            <span class="pill">Composite CDI-E: <b>0.34</b></span>
+            <span class="pill">Confidence: High (Lowveld) · Moderate (Highveld)</span>
+          </div>
+        </div>
+        <div class="body">
+
+          <h2>1. National status</h2>
+          <p>
+            Drought conditions are intensifying across the eastern Lowveld and southern Shiselweni. The composite CDI-E reached <b>0.34</b> nationally — its lowest May value in the last six years — driven by a 2-month rainfall deficit of <b>−58 mm against the 1991–2020 normal</b> and persistent positive land-surface temperature anomalies (+2.1°C). Approximately <b>22.6% of the country is now in D2 or worse</b>.
+          </p>
+          <div class="callout">
+            <b>Headline:</b> 22.6% of Eswatini in severe drought (D2+). Lavumisa and Big Bend areas now in D3. Highveld remains stable but vegetation lag is being watched.
+          </div>
+
+          <h2>2. By region & agro-ecological zone</h2>
+          <div class="grid g-2" style="gap:10px;margin-top:6px">
+            <div>
+              <table class="data" style="font-size:12px">
+                <thead><tr><th>Region</th><th>Class</th><th class="num">% area D2+</th></tr></thead>
+                <tbody>
+                  <tr><td>Lubombo</td><td><span class="chip d2">D2</span></td><td class="num">55%</td></tr>
+                  <tr><td>Shiselweni</td><td><span class="chip d2">D2</span></td><td class="num">46%</td></tr>
+                  <tr><td>Manzini</td><td><span class="chip d1">D1</span></td><td class="num">15%</td></tr>
+                  <tr><td>Hhohho</td><td><span class="chip d0">D0</span></td><td class="num">5%</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div>
+              <table class="data" style="font-size:12px">
+                <thead><tr><th>Agro-zone</th><th>Class</th><th class="num">Δ vs Apr</th></tr></thead>
+                <tbody>
+                  <tr><td>Lowveld</td><td><span class="chip d2">D2</span></td><td class="num" style="color:var(--bad)">↓ 0.18</td></tr>
+                  <tr><td>Lubombo plateau</td><td><span class="chip d1">D1</span></td><td class="num" style="color:var(--bad)">↓ 0.09</td></tr>
+                  <tr><td>Middleveld</td><td><span class="chip d1">D1</span></td><td class="num" style="color:var(--ink-3)">↔ 0.02</td></tr>
+                  <tr><td>Highveld</td><td><span class="chip d0">D0</span></td><td class="num" style="color:var(--good)">↑ 0.04</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <h2>3. Indicator maps</h2>
+          <div class="grid g-3" style="gap:8px">
+            <div class="map-wrap" style="aspect-ratio:1/1.1">
+              <svg viewBox="0 0 100 110" preserveAspectRatio="xMidYMid meet">
+                <path d="M 50 10 L 60 18 L 70 35 L 73 60 L 70 80 L 60 95 L 45 100 L 30 90 L 25 70 L 28 40 L 35 20 Z" fill="#fcefd6" stroke="#1e4d7b" stroke-width=".7"/>
+                <ellipse cx="55" cy="40" rx="20" ry="20" fill="#ffaa00" opacity=".7"/>
+                <ellipse cx="50" cy="80" rx="15" ry="15" fill="#e60000" opacity=".5"/>
+                <ellipse cx="35" cy="50" rx="12" ry="20" fill="#ffff5c" opacity=".5"/>
+              </svg>
+              <div class="map-overlay" style="font-size:9px;padding:3px 6px"><b>CDI-E</b></div>
+            </div>
+            <div class="map-wrap" style="aspect-ratio:1/1.1">
+              <svg viewBox="0 0 100 110">
+                <path d="M 50 10 L 60 18 L 70 35 L 73 60 L 70 80 L 60 95 L 45 100 L 30 90 L 25 70 L 28 40 L 35 20 Z" fill="#fcefd6" stroke="#1e4d7b" stroke-width=".7"/>
+                <ellipse cx="55" cy="50" rx="22" ry="35" fill="#d4691f" opacity=".6"/>
+                <ellipse cx="40" cy="40" rx="14" ry="14" fill="#fcd37f" opacity=".6"/>
+              </svg>
+              <div class="map-overlay" style="font-size:9px;padding:3px 6px"><b>Rainfall anomaly</b></div>
+            </div>
+            <div class="map-wrap" style="aspect-ratio:1/1.1">
+              <svg viewBox="0 0 100 110">
+                <path d="M 50 10 L 60 18 L 70 35 L 73 60 L 70 80 L 60 95 L 45 100 L 30 90 L 25 70 L 28 40 L 35 20 Z" fill="#fcefd6" stroke="#1e4d7b" stroke-width=".7"/>
+                <ellipse cx="55" cy="60" rx="22" ry="30" fill="#e60000" opacity=".55"/>
+                <ellipse cx="35" cy="40" rx="12" ry="14" fill="#ffaa00" opacity=".45"/>
+              </svg>
+              <div class="map-overlay" style="font-size:9px;padding:3px 6px"><b>LST anomaly</b></div>
+            </div>
+          </div>
+
+          <h2>4. Where station and satellite signals diverge</h2>
+          <p>
+            Station × pixel comparison is high-confidence in <b>52% of stations</b> (n=28). Disagreement is concentrated in the north-western Highveld around <b>Piggs Peak</b> and pockets in the Middleveld around <b>Kubuta</b> — consistent with the CHIRPS validation precedent in complex topography. Four stations are flagged <b>Review required</b> and have been routed to the Technical Working Group.
+          </p>
+          <div class="callout">
+            <b>Diagnostic, not error:</b> a disagreement is itself information. The Hub does not force agreement — it raises a confidence flag and explains the likely cause.
+          </div>
+
+          <h2>5. Sector implications</h2>
+          <div class="sectorbox">
+            <div class="sec bad">
+              <div class="icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M5 9c2-3 5-3 7 0s5 3 7 0"/></svg>
+              </div>
+              <div class="name">Agriculture</div>
+              <div class="note">Maize harvest projection downgraded in Shiselweni & Lowveld; field reports of early tasselling.</div>
+            </div>
+            <div class="sec warn">
+              <div class="icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 14H4z"/></svg>
+              </div>
+              <div class="name">Water & WASH</div>
+              <div class="note">Borehole stress reported in Lubombo; recommend monitoring of communal taps in 4 chiefdoms.</div>
+            </div>
+            <div class="sec warn">
+              <div class="icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v6"/></svg>
+              </div>
+              <div class="name">Ecosystems</div>
+              <div class="note">Vegetation greenness lag in Middleveld; protected-area managers advised.</div>
+            </div>
+            <div class="sec">
+              <div class="icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M12 3v18"/></svg>
+              </div>
+              <div class="name">DRR & preparedness</div>
+              <div class="note">No Tier-2 escalation yet. Suggest pre-positioning fodder in Shiselweni if D2+ persists 30 more days.</div>
+            </div>
+          </div>
+
+          <h2>6. Priority watch areas</h2>
+          <p>
+            Immediate monitoring focus: <b>Lavumisa, Big Bend, Nsoko, Siphofaneni, Hluti</b>. Recommend targeted field verification visits for the four "Review required" stations and increased Kobo reporting cadence in the south.
+          </p>
+
+          <h2>7. Methodology & data sources</h2>
+          <p class="small muted" style="margin-bottom:0">
+            CDI-E composite (NDVI + precipitation + LST), station × pixel pairing on 3×3 windows, Pearson/Spearman correlation, MAE/RMSE, drought-class confusion matrix. Sources: NDMC, CHIRPS 2.0, MOD11/MOD13, NDMA 59-station network, KoboToolbox citizen reports, partner data (RSSC, Illovo soil moisture). Full methodology and code: <a href="#">hub.ndma.gov.sz/methods</a>.
+          </p>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="footer">
+  Eswatini Drought Intelligence Hub — first design iteration, May 2026 · Mock data for review purposes only · Built by Akvo
+</div>
+
+<script>
+  function goTab(id) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === id));
+    document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + id));
+    window.scrollTo({top: 0, behavior: 'smooth'});
+  }
+  function setView(mode) {
+    document.body.classList.toggle('public-view', mode === 'public');
+    document.getElementById('btn-tech').classList.toggle('active', mode === 'technical');
+    document.getElementById('btn-public').classList.toggle('active', mode === 'public');
+  }
+  // Toggle behavior in builder list
+  document.querySelectorAll('.builder-list .toggle').forEach(t => {
+    t.addEventListener('click', () => t.classList.toggle('on'));
+  });
+</script>
+
+</body>
+</html>
